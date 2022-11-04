@@ -1,46 +1,18 @@
 import nasapol as nasa
+import gas as phase
 import cantera as ct
 import numpy as np
 import math
 
-#for specie in species:
-#    gas = ct.Solution('gri30.yaml')
-#    X_str = specie + ':1'
-#    gas.TPX = T_k_old, p_ct, X_str
-#    print(gas())
-#    print(gas.delta_standard_gibbs[0]/1e3)
-#    gibbs_free = gas.standard_gibbs_RT[0] * (ct.gas_constant * T_k_old) / 1e3
-#    print(gibbs_free)
-
-def enthalpy_RT(T, coefs):
-    h_RT = np.longdouble(coefs[0] + coefs[1]*T/2 + coefs[2]*(T**2)/3 + coefs[3]*(T**3)/4 
-           + coefs[4]*(T**4)/5 + coefs[5]/T)
-
-    return h_RT
-
-def entropy_R(T, coefs):
-    s_R = np.longdouble(coefs[0]*np.log(T) + coefs[1]*T + coefs[2]*(T**2)/2 + coefs[3]*(T**3)/3 
-           + coefs[4]*(T**4/4) + coefs[5])
-
-    return s_R 
-
-def gibbs_RT(h_RT, s_R):
-    return np.longdouble(h_RT - s_R)
-
-def gibbs_RT_f(specie, T):
-    if specie == 'H2O':
-        G_RT_F = gibbs_RT(enthalpy_RT(T, specie)) - \
-                 gibbs_RT(enthalpy_RT(T, 'H2'))
-def kp(specie, T):
-    if specie == 'H2O':
-        
-    return np.longdouble(np.exp(g_RT))
+def kp(delta_G_RT_F):
+    print('KP', np.exp(-delta_G_RT_F))
+    return np.exp(-delta_G_RT_F)
 
 if __name__ == '__main__':
 
     # State properties
     p_ct = 20 * ct.one_atm
-    T_k_old = 500 
+    T_k_old = 2500 
     
     species = ['H2', 'O2', 'N2', 'H2O', 'OH', 'O', 'H', 'NO']
     #species = 'H2'
@@ -56,18 +28,53 @@ if __name__ == '__main__':
     # Iterative method tolerance
     error_norm = 1e-5
 
-    for specie in species[3:]:
-        lines = nasa.find_element_lines(specie)
-        coefs = nasa.nasa_7_coeff(T_k_old, lines)
+    # general information
+    for specie in species[:]:
+        tmp = phase.gas(specie) 
+        #tmp.print_coefs()
+        #print('Enthalpy for ', specie, ':\n',  tmp.get_enthalpy_RT(T_k_old))
+        #print('Entropy for ', specie, ':\n',  tmp.get_entropy_R(T_k_old))
+        #print('Gibbs for ', specie, ':\n',  tmp.get_gibbs_RT(T_k_old))
 
-        print('Calculating for: ', specie)
+    # Initializing products:
+    H2 = phase.gas('H2')
+    O2 = phase.gas('O2')
+    N2 = phase.gas('N2')
+    H2O = phase.gas('H2O')
+    OH = phase.gas('OH')
+    O = phase.gas('O')
+    H = phase.gas('H')
+    NO = phase.gas('NO')
 
-        # Calculating thermodynamic properties
-        h_RT = enthalpy_RT(T_k_old, coefs)
-        print('Enthalpy: ', h_RT)
-        s_R = entropy_R(T_k_old, coefs)
-        print('Entropy: ', s_R)
-        g_RT = gibbs_RT(h_RT, s_R)
-        print('Gibbs: ', g_RT)
-        kp_value = kp(g_RT)
-        print('kp: ', kp_value)
+    # H2O formation reaction:
+    # H2 + 1/2O2 -> H2O
+    dG_RT_F_H2O = (H2O.get_gibbs_RT(T_k_old) - H2.get_gibbs_RT(T_k_old) 
+                   - (1/2)*O2.get_gibbs_RT(T_k_old))
+    print('H2O')
+    kp_F_H2O = kp(dG_RT_F_H2O)
+
+    # OH formation reaction:
+    # 1/2H2 + 1/2O2 -> OH
+    dG_RT_F_OH = (OH.get_gibbs_RT(T_k_old) - (1/2)*H2.get_gibbs_RT(T_k_old) 
+                  - (1/2)*O2.get_gibbs_RT(T_k_old))
+    print('OH')
+    kp_F_OH = kp(dG_RT_F_OH)
+
+    # O formation reaction:
+    # 1/2O2 -> O
+    dG_RT_F_O = (O.get_gibbs_RT(T_k_old) - (1/2)*O2.get_gibbs_RT(T_k_old))
+    print('O')
+    kp_F_O = kp(dG_RT_F_O)
+    
+    # H formation reaction:
+    # 1/2H2 -> H
+    dG_RT_F_H = (H.get_gibbs_RT(T_k_old) - (1/2)*H2.get_gibbs_RT(T_k_old))
+    print('H')
+    kp_F_H = kp(dG_RT_F_H)
+
+    # NO formation reaction:
+    # 1/2N2 + 1/2O2 -> NO
+    dG_RT_F_NO = (NO.get_gibbs_RT(T_k_old) - (1/2)*N2.get_gibbs_RT(T_k_old) 
+                  - (1/2)*O2.get_gibbs_RT(T_k_old))
+    print('NO')
+    kp_F_NO = kp(dG_RT_F_NO)

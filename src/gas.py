@@ -22,6 +22,7 @@ class gas():
             print("Out of temperature range.")
             pass
 
+        #print(f"{self.name} - H_RT({T}) = {h_RT}")
         return h_RT
     
     def get_entropy_R(self, T):
@@ -37,7 +38,10 @@ class gas():
             print("Out of temperature range.")
             pass
 
+        #print(f"{self.name} - S_R({T}) = {s_R}")
         return s_R
     
     def get_gibbs_RT(self, T):
-        return (self.get_enthalpy_RT(T) - self.get_entropy_R(T))
+        g_RT = self.get_enthalpy_RT(T) - self.get_entropy_R(T) 
+        #print(f"{self.name} - g_RT({T}) = {g_RT}")
+        return g_RT

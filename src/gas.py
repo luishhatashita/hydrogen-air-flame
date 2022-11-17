@@ -45,3 +45,18 @@ class gas():
         g_RT = self.get_enthalpy_RT(T) - self.get_entropy_R(T) 
         #print(f"{self.name} - g_RT({T}) = {g_RT}")
         return g_RT
+
+    def get_enthalpy_per_mole(self, T):
+        R_bar = 8.31446261815324
+        T_array = np.array([1, T/2, (T**2)/3, (T**3)/4, (T**4)/5, 1/T]) 
+
+        if (T >= self.T_low and T<= self.T_mid):
+            h = R_bar * T * np.dot(self.coefs_low[:-1], T_array)
+        elif (T >= self.T_mid and T<= self.T_high):
+            h = R_bar * T * np.dot(self.coefs_high[:-1], T_array)
+        else:
+            print("Out of temperature range.")
+            pass
+
+        #print(f"{self.name} - H_RT({T}) = {h_RT}")
+        return h

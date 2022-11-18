@@ -3,34 +3,37 @@ import reactions as rt
 import gas as phase 
 import num_method as num
 import numpy as np
+import matplotlib.pyplot as plt
+plt.style.use('../latex.mplstyle')
 
-def comp_temp(p, phi, H2, O2, N2, H2O, OH, O, H, NO):
+def comp_temp(T_guess, p, phi, H2, O2, N2, H2O, OH, O, H, NO):
+    print(f"---Start: p = {p}, equivalence ratio = {phi:.1f}")
     # Iterative method tolerance
     max_it_b = 15
     error_norm = 0.01
-    error_T = 0.1 
+    error_T = 0.01 
 
     # Reactants calculation of initial flame composition
     # Total enthalpy (ie extensive) = 
     # n_tot * (X_H2 * h_H2(T_H2) + X_O2 * h_O2(T_O2) +X_N2 * h_N2(T_N2)) 
     # where intensive enthalpy = H/RT * R_bar*T
     H_react = rt.H_react(phi, H2, O2, N2) 
-    print(f"H_react: {H_react}")
+    #print(f"H_react: {H_react:.2f} J")
 
     # Define the vector of mole fractions X as:
     # X = [X_H2, X_O2, X_N2, X_H2O, X_OH, X_O, X_H, X_NO]
-    X_k_old = np.array([0.01, 30/(1e6), 0.59, 0.30, 1300/(1e6), 30/(1e6), 2600/(1e6), 3/(1e9)])
+    X_k_old = np.array([0.1, 30/(1e6), 0.59, 0.30, 1300/(1e6), 30/(1e6), 2600/(1e6), 3/(1e9)])
     #X_k_old = np.array([0.3, 0.2, 0.5, 0, 0, 0, 0, 0])
     #X_k_old = (1/8)*np.ones(8) 
     #print(X_k_old.shape)
     #print(f"Sum X_k_old: {np.sum(X_k_old)}")
-    T_k_old = 2500
+    T_k_old = T_guess 
     #print(jacobian(X_k_old, p_ct))
     X_k = np.zeros(8)
 
     error_old = 1
 
-    for i in range(5):
+    for i in range(10):
         #print(f"---Iteration {i+1} - Euler for X") 
 
         # Reaction values:
@@ -62,12 +65,13 @@ def comp_temp(p, phi, H2, O2, N2, H2O, OH, O, H, NO):
         #print(f"Species = {species}")
         #print(f"X = {X_k}")
         #print(f"Sum of X = {np.sum(X_k)}")
-        #print(f"Error = {np.linalg.norm(X_k - X_k_old)}")
+        print(f"Error[{i+1}] = {np.linalg.norm(X_k - X_k_old)}")
 
         #print('T = ', T_k_old)
         error = np.linalg.norm(X_k - X_k_old)
 
-        if error > error_old:
+        #if (error > error_old) or np.isnan(error):
+        if np.isnan(error):
             print(f"Euler method diverging at iteration {i+1}")
             X_k = X_k_old # returning to the old value
             T_k = num.bisection(T_k_old, H_react, X_k, phi, H2, O2, N2, 
@@ -85,12 +89,18 @@ def comp_temp(p, phi, H2, O2, N2, H2O, OH, O, H, NO):
 if __name__ == '__main__':
 
     # State properties
-    p = 20 #* ct.one_atm
+    ps = np.array([2, 10, 20]) #* ct.one_atm
     
     # Define equivalence ration interval 
     N = int((1.3-0.7)/0.1 + 1)
-    eq_ratio = np.linspace(0.7, 1.3, num=N)
+    #N = 1
+    eq_ratios = np.linspace(0.7, 1.3, num=N)
+    #eq_ratios = [1] 
     
+    T_guess_eq = [2300, 2200, 2200, 2500, 2500, 2500, 2500]
+    #T_guess_eq = [2500]
+    X_matrix_eq = np.zeros([N, 8])
+    T_final_eq = np.zeros(N)
 
     species = ['H2', 'O2', 'N2', 'H2O', 'OH', 'O', 'H', 'NO']
     #species = 'H2'
@@ -105,21 +115,44 @@ if __name__ == '__main__':
     H = phase.gas('H')
     NO = phase.gas('NO')
 
-    T, X = comp_temp(p, eq_ratio[3], H2, O2, N2, H2O, OH, O, H, NO)
+    # Equivalence ratio study - \Phi \in [0.7, 1.3] at 20 atm
+    for i, eq_ratio in enumerate(eq_ratios):
 
-    H_prod_f = rt.H_prod(T, X, eq_ratio[3], H2, O2, N2, H2O, OH, O, H, NO)
+        T_eq, X_eq = comp_temp(T_guess_eq[i], ps[2], eq_ratio, H2, O2, N2, H2O, OH, O, H, NO)
+        
+        H_react = rt.H_react(eq_ratio, H2, O2, N2) 
+        H_prod_f = rt.H_prod(T_eq, X_eq, eq_ratio, H2, O2, N2, H2O, OH, O, H, NO)
 
-    print("---End results")
-    print(f"H_prod({T:.2f}) = {H_prod_f:.2f} J")
-    print(f"Flame temperature = {T:.2f} K")
-    print(f"X_H2 = {X[0]*100:.2f}%")
-    print(f"X_O2 = {X[1]*100:.2f}%")
-    print(f"X_N2 = {X[2]*100:.2f}%")
-    print(f"X_H2O = {X[3]*100:.2f}%")
-    print(f"X_OH = {X[4]*100:.2f}%")
-    print(f"X_O = {X[5]*100:.2f}%")
-    print(f"X_H = {X[6]*100:.2f}%")
-    print(f"X_NO = {X[7]*100:.2f}%")
+        X_matrix_eq[i, :] = X_eq
+        T_final_eq[i] = T_eq
+
+        print(f"---End results for Equivalence Ratio of {eq_ratio:.1f}")
+        print(f"H_react = {H_react:.2f} J")
+        print(f"H_prod({T_eq:.2f}) = {H_prod_f:.2f} J")
+        print(f"Flame temperature = {T_eq:.2f} K")
+        print(f"X_H2 = {X_eq[0]*100:.2f}%")
+        print(f"X_O2 = {X_eq[1]*100:.2f}%")
+        print(f"X_N2 = {X_eq[2]*100:.2f}%")
+        print(f"X_H2O = {X_eq[3]*100:.2f}%")
+        print(f"X_OH = {X_eq[4]*100:.2f}%")
+        print(f"X_O = {X_eq[5]*100:.2f}%")
+        print(f"X_H = {X_eq[6]*100:.2f}%")
+        print(f"X_NO = {X_eq[7]*100:.2f}%")
+
+    fig1, ax1 = plt.subplots()
+    ax1.plot(eq_ratios, T_final_eq)
+    ax1.set(xlabel="Equivalence Ratio $\Phi$", ylabel="$T_{ad}$ [K]",
+           title="Adiabatic flame temperature")
+    ax1.grid()
+    
+    #for i, p in enumerate(ps):
+
+    #    T_stoic = 2500
+
+    #    T_p, X_p = comp_temp(T_stoic, p, eq_ratios[3], H2, O2, N2, H2O, OH, O, H, NO)
+
+    #plt.show()
+
     #for i in range(1):
     #    # Fixed point iterative method
     #    # From conservation of atoms

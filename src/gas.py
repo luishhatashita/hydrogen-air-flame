@@ -46,6 +46,12 @@ class gas():
         #print(f"{self.name} - g_RT({T}) = {g_RT}")
         return g_RT
 
+    def get_gibbs_per_mole(self, T):
+        R_bar = 8.31446261815324
+        g = R_bar*T*(self.get_enthalpy_RT(T) - self.get_entropy_R(T)) 
+        #print(f"{self.name} - g_RT({T}) = {g_RT}")
+        return g
+
     def get_enthalpy_per_mole(self, T):
         R_bar = 8.31446261815324
         T_array = np.array([1, T/2, (T**2)/3, (T**3)/4, (T**4)/5, 1/T]) 

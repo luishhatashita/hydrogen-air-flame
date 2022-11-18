@@ -75,7 +75,7 @@ def jacobian(x, p):
 
     # Defining forth line as:
     # J[3, i] = \frac{f4}{xi}, with the following non-zero terms:
-    J[3, 0] = -(p**(1/2))*x[6]/(2*(x[1]**(3/2)))
+    J[3, 0] = -(p**(1/2))*x[6]/(2*(x[0]**(3/2)))
     J[3, 6] = (p**(1/2))/((x[0]**(1/2)))
 
     # Defining fifth line as:
@@ -108,7 +108,7 @@ def jacobian(x, p):
     # Defining eigth line as:
     # J[7, i] = \frac{f8}{xi} = 1
     J[7, :] = 1
-
+    #print(J)
     return J
 
 def bisection(T_c, H_react, x_k, phi, H2, O2, N2, H2O, OH, O, H, NO, 
@@ -138,7 +138,7 @@ def bisection(T_c, H_react, x_k, phi, H2, O2, N2, H2O, OH, O, H, NO,
         #print(f"f(T_c) = {fc}")
 
         if ((fa*fb) >= 0):
-            print("Algorithm crash")
+            #print("Algorithm crash")
             it += 1
         elif ((fc*fa) < 0):
             T_b = T_c
@@ -149,7 +149,7 @@ def bisection(T_c, H_react, x_k, phi, H2, O2, N2, H2O, OH, O, H, NO,
             error = abs(T_a-T_b)
             it += 1
         else:
-            print("Unknown error")
+            #print("Unknown error")
             it += 1
 
     H_prod_T_c = rt.H_prod(T_c, x_k, phi, H2, O2, N2, H2O, OH, O, H, NO)

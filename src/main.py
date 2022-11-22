@@ -7,11 +7,27 @@ import pandas as pd
 import matplotlib.pyplot as plt
 plt.style.use('../latex.mplstyle')
 
-#def interpolate_x(eq_ratio):
-#    df = pd.read_csv('../data/x_guess.csv')
+def interpolate_T_x(eq_ratio):
+    df = pd.read_csv('../data/x_guess.csv')
+
+    eq_ratio = float(f'{eq_ratio:.2f}')
+
+    empty = eq_ratio not in df['eq_ratio']
+
+    if empty is True:
+        df.loc[len(df.index)] = [eq_ratio, np.nan, 
+                                 np.nan, np.nan, np.nan, np.nan,
+                                 np.nan, np.nan, np.nan, np.nan]
+        df = df.sort_values(by='eq_ratio')
+        df = df.set_index('eq_ratio').interpolate(method='polynomial', order=5).reset_index()
+
+    T = df.loc[df['eq_ratio'] == eq_ratio].values[0, 1]
+    X = df.loc[df['eq_ratio'] == eq_ratio].values[0, 2:]
+
+    return T, X 
 
 def comp_temp(T_guess, X_guess, p, phi, H_react, H2, O2, N2, H2O, OH, O, H, NO):
-    print(f"---Start: p = {p}, equivalence ratio = {phi:.1f}")
+    print(f"---Start: p = {p}, equivalence ratio = {phi:.2f}")
     # Iterative method tolerance
     max_it_b = 15
     error_norm = 0.01
@@ -55,7 +71,7 @@ def comp_temp(T_guess, X_guess, p, phi, H_react, H2, O2, N2, H2O, OH, O, H, NO):
         #print(f"Species = {species}")
         #print(f"X = {X_k}")
         #print(f"Sum of X = {np.sum(X_k)}")
-        print(f"Error[{i+1}] = {np.linalg.norm(X_k - X_k_old)}")
+        #print(f"Error[{i+1}] = {np.linalg.norm(X_k - X_k_old)}")
 
         #print('T = ', T_k_old)
         error = np.linalg.norm(X_k - X_k_old)
@@ -76,14 +92,28 @@ def comp_temp(T_guess, X_guess, p, phi, H_react, H2, O2, N2, H2O, OH, O, H, NO):
 
     return T_k_old, X_k_old
 
+def get_label(i):
+    label = {
+        '0': 'X$_{H_2}$',
+        '1': 'X$_{O_2}$',
+        '2': 'X$_{N_2}$',
+        '3': 'X$_{H_2O}$',
+        '4': 'X$_{OH}$',
+        '5': 'X$_{O}$',
+        '6': 'X$_{H}$',
+        '7': 'X$_{NO}$'
+    }
+
+    return label.get(str(i))
+
 if __name__ == '__main__':
 
     # State properties
     ps = np.linspace(2, 10, 9) #* ct.one_atm
     
     # Define equivalence ration interval 
-    N = int((1.3-0.7)/0.1 + 1)
-    #N = 1
+    #N = int((1.3-0.7)/0.1 + 1)
+    N = 7 
     eq_ratios = np.linspace(0.7, 1.3, num=N)
     #eq_ratios = [1] 
     
@@ -129,11 +159,14 @@ if __name__ == '__main__':
         H_react = rt.H_react(eq_ratio, H2, O2, N2) 
         #print(f"H_react: {H_react:.2f} J")
         
-        X_guess = np.array(X_guess_eq[i, :]) 
+        #X_guess = np.array(X_guess_eq[i, :]) 
+        T_guess, X_guess = interpolate_T_x(eq_ratio) 
 
-
-        T_eq, X_eq = comp_temp(T_guess_eq[i], X_guess, ps[8], eq_ratio, H_react,
+        T_eq, X_eq = comp_temp(T_guess, X_guess, ps[8], eq_ratio, H_react,
                                H2, O2, N2, H2O, OH, O, H, NO)
+
+        #T_eq, X_eq = comp_temp(T_guess_eq[i], X_guess, ps[8], eq_ratio, H_react,
+        #                       H2, O2, N2, H2O, OH, O, H, NO)
         
         H_prod_f = rt.H_prod(T_eq, X_eq, eq_ratio, H2, O2, N2, H2O, OH, O, H, NO)
 
@@ -141,17 +174,17 @@ if __name__ == '__main__':
         T_final_eq[i] = T_eq
 
         print(f"---End results for Equivalence Ratio of {eq_ratio:.1f}")
-        print(f"H_react = {H_react:.2f} J")
-        print(f"H_prod({T_eq:.2f}) = {H_prod_f:.2f} J")
+        #print(f"H_react = {H_react:.2f} J")
+        #print(f"H_prod({T_eq:.2f}) = {H_prod_f:.2f} J")
         print(f"Flame temperature = {T_eq:.2f} K")
-        print(f"X_H2 = {X_eq[0]*100:.2f}%")
-        print(f"X_O2 = {X_eq[1]*100:.2f}%")
-        print(f"X_N2 = {X_eq[2]*100:.2f}%")
-        print(f"X_H2O = {X_eq[3]*100:.2f}%")
-        print(f"X_OH = {X_eq[4]*100:.2f}%")
-        print(f"X_O = {X_eq[5]*100:.2f}%")
-        print(f"X_H = {X_eq[6]*100:.2f}%")
-        print(f"X_NO = {X_eq[7]*100:.2f}%")
+        #print(f"X_H2 = {X_eq[0]*100:.2f}%")
+        #print(f"X_O2 = {X_eq[1]*100:.2f}%")
+        #print(f"X_N2 = {X_eq[2]*100:.2f}%")
+        #print(f"X_H2O = {X_eq[3]*100:.2f}%")
+        #print(f"X_OH = {X_eq[4]*100:.2f}%")
+        #print(f"X_O = {X_eq[5]*100:.2f}%")
+        #print(f"X_H = {X_eq[6]*100:.2f}%")
+        #print(f"X_NO = {X_eq[7]*100:.2f}%")
         #exit()
 
     fig1, ax1 = plt.subplots()
@@ -161,15 +194,25 @@ if __name__ == '__main__':
     ax1.grid()
     fig1.savefig('../figs/eq_ratio.png')
     
+    fig2, ax2 = plt.subplots()
+    for i in range(len(X_matrix_eq[0, :])):
+        ax2.plot(eq_ratios, X_matrix_eq[:, i], label=get_label(i))
+    ax2.set(xlabel="Equivalence Ratio $\Phi$", ylabel="Molar Fractions",
+           title="Equilibrium composition")
+    ax2.set_yscale('log')
+    ax2.legend()
+    ax2.grid()
+    fig2.savefig('../figs/eq_ratio_mf.png')
+
     for i, p in enumerate(ps):
 
         T_stoic = 2500
 
-        H_react = rt.H_react(eq_ratios[3], H2, O2, N2) 
+        H_react = rt.H_react(1, H2, O2, N2) 
         
         X_guess = np.array(X_guess_eq[3, :]) 
 
-        T_p, X_p = comp_temp(T_stoic, X_guess, p, eq_ratios[3], H_react,
+        T_p, X_p = comp_temp(T_stoic, X_guess, p, 1, H_react,
                              H2, O2, N2, H2O, OH, O, H, NO)
 
         H_prod_f = rt.H_prod(T_p, X_p, eq_ratios[3], H2, O2, N2, H2O, OH, O, H, NO)
@@ -178,25 +221,34 @@ if __name__ == '__main__':
         T_final_p[i] = T_p
 
         print(f"---End results for Equivalence Ratio of {eq_ratio:.1f}")
-        print(f"H_react = {H_react:.2f} J")
-        print(f"H_prod({T_p:.2f}) = {H_prod_f:.2f} J")
+        #print(f"H_react = {H_react:.2f} J")
+        #print(f"H_prod({T_p:.2f}) = {H_prod_f:.2f} J")
         print(f"Flame temperature = {T_p:.2f} K")
-        print(f"X_H2 = {X_p[0]*100:.2f}%")
-        print(f"X_O2 = {X_p[1]*100:.2f}%")
-        print(f"X_N2 = {X_p[2]*100:.2f}%")
-        print(f"X_H2O = {X_p[3]*100:.2f}%")
-        print(f"X_OH = {X_p[4]*100:.2f}%")
-        print(f"X_O = {X_p[5]*100:.2f}%")
-        print(f"X_H = {X_p[6]*100:.2f}%")
-        print(f"X_NO = {X_p[7]*100:.2f}%")
+        #print(f"X_H2 = {X_p[0]*100:.2f}%")
+        #print(f"X_O2 = {X_p[1]*100:.2f}%")
+        #print(f"X_N2 = {X_p[2]*100:.2f}%")
+        #print(f"X_H2O = {X_p[3]*100:.2f}%")
+        #print(f"X_OH = {X_p[4]*100:.2f}%")
+        #print(f"X_O = {X_p[5]*100:.2f}%")
+        #print(f"X_H = {X_p[6]*100:.2f}%")
+        #print(f"X_NO = {X_p[7]*100:.2f}%")
 
-    fig2, ax2 = plt.subplots()
-    ax2.plot(ps, T_final_p)
-    ax2.set(xlabel="Pressure [atm]", ylabel="$T_{ad}$ [K]",
+    fig3, ax3 = plt.subplots()
+    ax3.plot(ps, T_final_p)
+    ax3.set(xlabel="Pressure [atm]", ylabel="$T_{ad}$ [K]",
            title="Effect of pressure on the Flame")
-    ax2.grid()
-    fig2.savefig('../figs/pressure.png')
+    ax3.grid()
+    fig3.savefig('../figs/pressure.png')
     
+    fig4, ax4 = plt.subplots()
+    for i in range(len(X_matrix_p[0, :])):
+        ax4.plot(ps, X_matrix_p[:, i], label=get_label(i))
+    ax4.set(xlabel="Pressure [atm]", ylabel="Molar Fractions",
+           title="Equilibrium composition")
+    #ax4.set_yscale('log')
+    ax4.legend(loc='center right')
+    ax4.grid()
+    fig4.savefig('../figs/pressure_mf.png')
     #plt.show()
 
     #for i in range(1):

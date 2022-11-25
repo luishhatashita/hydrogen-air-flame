@@ -29,7 +29,8 @@ def molar_frac(T, p, eq_ratio, H2, O2, N2, H2O, OH, O, H, NO, Ne, n_Ne):
 
     # Define the vector of mole fractions X as:
     # X = [X_H2, X_O2, X_N2, X_H2O, X_OH, X_O, X_H, X_NO, X_Ne]
-    X_guess = np.array([3e-3, 1e-3, 0.45, 0.23, 1e-3, 1e-5, 1e-4, 7e-4, 0.3])
+    #X_guess = np.array([3e-3, 1e-3, 0.45, 0.23, 1e-3, 1e-5, 1e-4, 7e-4, 0.3])
+    X_guess = np.array([1e-2, 5e-4, 0.64, 0.3, 5e-3, 2e-4, 8e-4, 2e-3, 0])
     n_tot_f = rt.get_final_moles(X_guess, eq_ratio)
     X_guess[8] = n_Ne/n_tot_f
 
@@ -93,7 +94,8 @@ if __name__ == '__main__':
     p = 20
     eq_ratio = 1
     T_target = 2268.17
-    T = 2500 
+    T_start = 2500
+    #T = 2500 
 
     # Initializing products:
     species = ['H2', 'O2', 'N2', 'H2O', 'OH', 'O', 'H', 'NO', 'Ne']
@@ -107,15 +109,22 @@ if __name__ == '__main__':
     NO = phase.gas('NO')
     Ne = phase.gas('Ne')
 
-    n_Ne_a = np.linspace(0, 0.01, 10)
+    #n_Ne_a = np.linspace(0, 0.02, 9)
+    n_Ne_a = np.linspace(0, 2, 11)
 
-    for n_Ne in n_Ne_a:
+    T_f = np.empty_like(n_Ne_a)
+    Target = T_target * np.ones_like(n_Ne_a)
 
-        X, T = molar_frac(T, p, eq_ratio, H2, O2, N2, H2O, OH, O, H, NO, Ne, n_Ne)
+    for i, n_Ne in enumerate(n_Ne_a):
+
+        #X, T = molar_frac(T, p, eq_ratio, H2, O2, N2, H2O, OH, O, H, NO, Ne, n_Ne)
+        X, T = molar_frac(T_start, p, eq_ratio, H2, O2, N2, H2O, OH, O, H, NO, Ne, n_Ne)
         
         print(f"n_Ne = {n_Ne:.5f}")
         print(f"X = {X}")
         print(f"T = {T}")
+
+        T_f[i] = T
 
         if T<T_target:
             # Properties:
@@ -139,3 +148,12 @@ if __name__ == '__main__':
             print(f"X_NO = {X[7]*100:.2f}%")
             print(f"X_Ne = {X[8]*100:.2f}%")
             break
+
+    print(i)
+    fig1, ax1 = plt.subplots() 
+    ax1.plot(n_Ne_a[:(i+1)], T_f[:(i+1)], label='Flame')
+    ax1.plot(n_Ne_a[:(i+1)], Target[:(i+1)], label='Target')
+    ax1.set(xlabel='Moles of Ne', ylabel='Temperature [K]')
+    ax1.legend()
+
+    plt.show()

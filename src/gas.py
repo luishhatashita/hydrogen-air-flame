@@ -4,8 +4,11 @@ import numpy as np
 class gas():
     def __init__(self, specie):
         self.name = specie
-        self.lines = nasa.find_element_lines(specie)
-        self.T_low, self.T_mid, self.T_high, self.coefs_low, self.coefs_high = nasa.nasa_7_coeff(self.lines)
+        if specie == 'Ne':
+            self.cp = 20.786
+        else:
+            self.lines = nasa.find_element_lines(specie)
+            self.T_low, self.T_mid, self.T_high, self.coefs_low, self.coefs_high = nasa.nasa_7_coeff(self.lines)
 
     def print_coefs(self):
         print("Lower range coefs\n", self.coefs_low)
@@ -66,3 +69,6 @@ class gas():
 
         #print(f"{self.name} - H_RT({T}) = {h_RT}")
         return h
+
+    def get_enthalpy_from_cp(self, T):
+        return self.cp * T

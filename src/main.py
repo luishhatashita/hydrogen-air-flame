@@ -160,7 +160,8 @@ if __name__ == '__main__':
         #print(f"H_react: {H_react:.2f} J")
         
         #X_guess = np.array(X_guess_eq[i, :]) 
-        T_guess, X_guess = interpolate_T_x(eq_ratio) 
+        #T_guess, X_guess = interpolate_T_x(eq_ratio) 
+        T_guess, X_guess = T_guess_eq[i], X_guess_eq[i, :] 
 
         T_eq, X_eq = comp_temp(T_guess, X_guess, ps[8], eq_ratio, H_react,
                                H2, O2, N2, H2O, OH, O, H, NO)

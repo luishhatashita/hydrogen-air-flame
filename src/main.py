@@ -109,7 +109,7 @@ def get_label(i):
 if __name__ == '__main__':
 
     # State properties
-    ps = np.linspace(2, 10, 9) #* ct.one_atm
+    ps = np.linspace(2, 20, 19) #* ct.one_atm
     
     # Define equivalence ration interval 
     #N = int((1.3-0.7)/0.1 + 1)
@@ -188,21 +188,27 @@ if __name__ == '__main__':
         #print(f"X_NO = {X_eq[7]*100:.2f}%")
         #exit()
 
+    np.savetxt('../data/eq_ratio_molar.csv', X_matrix_eq, delimiter=',')
+
     fig1, ax1 = plt.subplots()
     ax1.plot(eq_ratios, T_final_eq)
-    ax1.set(xlabel="Equivalence Ratio $\Phi$", ylabel="$T_{ad}$ [K]",
-           title="Effect of equivalence ratio on the Flame")
+    ax1.set(xlabel="Equivalence Ratio $\Phi$", ylabel="$T_{ad}$ [K]")
     ax1.grid()
     fig1.savefig('../figs/eq_ratio.png')
     
-    fig2, ax2 = plt.subplots()
+    fig2, ax2 = plt.subplots(1, 2)
     for i in range(len(X_matrix_eq[0, :])):
-        ax2.plot(eq_ratios, X_matrix_eq[:, i], label=get_label(i))
-    ax2.set(xlabel="Equivalence Ratio $\Phi$", ylabel="Molar Fractions",
-           title="Equilibrium composition")
-    ax2.set_yscale('log')
-    ax2.legend()
-    ax2.grid()
+        ax2[0].plot(eq_ratios, X_matrix_eq[:, i], label=get_label(i))
+    ax2[0].set(xlabel="Equivalence Ratio $\Phi$", ylabel="Molar Fractions")
+    #ax2[0].set_yscale('log')
+    ax2[0].grid()
+    for i in range(len(X_matrix_eq[0, :])):
+        ax2[1].plot(eq_ratios, X_matrix_eq[:, i], label=get_label(i))
+    ax2[1].set(xlabel="Equivalence Ratio $\Phi$")
+    ax2[1].set_yscale('log')
+    ax2[1].grid()
+    ax2[0].legend()
+    #fig2.suptitle("Equilibrium Composition")
     fig2.savefig('../figs/eq_ratio_mf.png')
 
     for i, p in enumerate(ps):
@@ -234,21 +240,26 @@ if __name__ == '__main__':
         #print(f"X_H = {X_p[6]*100:.2f}%")
         #print(f"X_NO = {X_p[7]*100:.2f}%")
 
+    np.savetxt('../data/pressure_molar.csv', X_matrix_p, delimiter=',')
+
     fig3, ax3 = plt.subplots()
     ax3.plot(ps, T_final_p)
-    ax3.set(xlabel="Pressure [atm]", ylabel="$T_{ad}$ [K]",
-           title="Effect of pressure on the Flame")
+    ax3.set(xlabel="Pressure [atm]", ylabel="$T_{ad}$ [K]")
     ax3.grid()
     fig3.savefig('../figs/pressure.png')
     
-    fig4, ax4 = plt.subplots()
+    fig4, ax4 = plt.subplots(1, 2)
     for i in range(len(X_matrix_p[0, :])):
-        ax4.plot(ps, X_matrix_p[:, i], label=get_label(i))
-    ax4.set(xlabel="Pressure [atm]", ylabel="Molar Fractions",
-           title="Equilibrium composition")
-    #ax4.set_yscale('log')
-    ax4.legend(loc='center right')
-    ax4.grid()
+        ax4[0].plot(ps, X_matrix_p[:, i], label=get_label(i))
+    ax4[0].set(xlabel="Pressure [atm]", ylabel="Molar Fractions")
+    #ax4[0].set_yscale('log')
+    ax4[0].grid()
+    for i in range(len(X_matrix_p[0, :])):
+        ax4[1].plot(ps, X_matrix_p[:, i], label=get_label(i))
+    ax4[1].set(xlabel="Pressure [atm]")
+    ax4[1].set_yscale('log')
+    ax4[1].grid()
+    ax4[0].legend(loc='center right')
     fig4.savefig('../figs/pressure_mf.png')
     #plt.show()
 
